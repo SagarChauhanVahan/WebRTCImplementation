@@ -17,7 +17,6 @@ function WebCommunication() {
     const peerRef = useRef(null);
     const partnerVideo = useRef(Video);
     const [streamStarted, setStreamStarted] = useState(false);
-    const [stream, setStream] = useState(null);
 
     const createPeer = () => {
         const peer = new Peer({
@@ -44,13 +43,6 @@ function WebCommunication() {
         // create a initiator peer
         // an initiator peer is someone which creates an offer internally with simple-peer's signal event
         // the callback gets the sdp that is transferred to signalling server and eventually to the receiver
-        // const peer = new Peer({
-        //     initiator: true,
-        //     trickle: false,
-        //     config: {
-        //         iceServers: [{url: 'stun:stun.l.google.com:19302'}]
-        //     },
-        // });
 
         peerRef.current = createPeer();
 
@@ -59,48 +51,11 @@ function WebCommunication() {
             // You can use a signaling server to exchange this information
             // In this example, we'll just log it
             // data which is received in the callback contains sdp offer
-            console.log('Local SDP:', data);
             socket.current.emit("offer", {sdp: data,caller:'vahanLeader',callee: 'rider'});
           });
     }
 
-    const acceptCall = async() => {
-        // create a initiator peer
-        // an initiator peer is someone which creates an offer internally with simple-peer's signal event
-        // the callback gets the sdp that is transferred to signalling server and eventually to the receiver
-        const peer = new Peer({
-            initiator: false,
-            trickle: false,
-            config: {
-                iceServers: [
-                    {
-                        urls: "stun:numb.viagenie.ca",
-                        username: "sultan1640@gmail.com",
-                        credential: "98376683"
-                    },
-                    {
-                        urls: "turn:numb.viagenie.ca",
-                        username: "sultan1640@gmail.com",
-                        credential: "98376683"
-                    }
-                ]
-            },
-        });
-
-        peer.on('signal', (data) => {
-            // Send the local session description to the remote peer
-            // You can use a signaling server to exchange this information
-            // In this example, we'll just log it
-            // data which is received in the callback contains sdp offer
-            console.log('Remote SDP:', data);
-          });
-    }
-
     const setPeersRemoteDesc = (data) => {
-
-        // peerRef.current.on("signal", data => {
-        //     console.log(data, 'Signal post getting SDP answer');
-        // });
 
         peerRef.current.signal(data.data);
         console.log(peerRef.current);
@@ -111,14 +66,10 @@ function WebCommunication() {
 
         peerRef.current.on("stream", data => {
             console.log("Streaming Data: ", data, partnerVideo);
-            // if(Object.keys(partnerVideo).contain) {
-            //     partnerVideo.current.srcObject = data;
-            // }
-            partnerVideo.current['srcObject'] = data;
+            partnerVideo.current['srcObject'] = data
             partnerVideo.current.onloadedmetadata = function(e) {
                 partnerVideo.current.play();
-                };
-            // setStream(data);
+             };
             setStreamStarted(true);
         })
     }
@@ -136,20 +87,13 @@ function WebCommunication() {
             setPeersRemoteDesc(data)
         })
 
-    //   initiateCall();
-    //   acceptCall();
     }, []);
 
     useEffect(() => {
         if(socket?.current?.id){
             socket?.current.emit('mapUserIdAndSocketId',{userId:'vahanLeader', socketId: socket.current.id});
         }
-    }, [socket])
-
-    // let PartnerVideo;
-    // if(streamStarted) {
-    //     PartnerVideo = (<Video playsInline ref={partnerVideo} autoPlay />);
-    // }
+    }, [socket?.current])
     
   return (
     <div>
@@ -157,7 +101,6 @@ function WebCommunication() {
         <button onClick={initiateCall}>Send Offer</button>
         <br />
         {streamStarted && <Video playsInline ref={partnerVideo} autoPlay />}
-        {/* {PartnerVideo} */}
     </div>
   )
 }
