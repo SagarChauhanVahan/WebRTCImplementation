@@ -3,6 +3,7 @@ import getSocket from '../utils/socket';
 // import { RTCPeerConnection } from 'react-native-webrtc-web-shim';
 import Peer from "simple-peer";
 import styled from "styled-components";
+import ReactPlayer from 'react-player'
 
 const socketConn = getSocket();
 
@@ -17,6 +18,7 @@ function WebCommunication() {
     const peerRef = useRef(null);
     const partnerVideo = useRef(Video);
     const [streamStarted, setStreamStarted] = useState(false);
+    const [remoteStream, setRemoteStream] = useState();
 
     const createPeer = () => {
         const peer = new Peer({
@@ -66,6 +68,7 @@ function WebCommunication() {
 
         peerRef.current.on("stream", data => {
             console.log("Streaming Data: ", data, partnerVideo);
+            setRemoteStream(data);
             partnerVideo.current['srcObject'] = data
             partnerVideo.current.onloadedmetadata = function(e) {
                 partnerVideo.current.play();
@@ -93,7 +96,7 @@ function WebCommunication() {
         if(socket?.current?.id){
             socket?.current.emit('mapUserIdAndSocketId',{userId:'vahanLeader', socketId: socket.current.id});
         }
-    }, [socket?.current])
+    }, [socket])
     
   return (
     <div>
@@ -101,6 +104,19 @@ function WebCommunication() {
         <button onClick={initiateCall}>Send Offer</button>
         <br />
         {streamStarted && <Video playsInline ref={partnerVideo} autoPlay />}
+        <br/><br/>
+
+        {/* {
+            remoteStream && (
+                <ReactPlayer
+                playing
+                muted
+                height="300px"
+                width="500px"
+                url={remoteStream} />
+            )
+        } */}
+        
     </div>
   )
 }
