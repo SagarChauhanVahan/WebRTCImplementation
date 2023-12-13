@@ -3,7 +3,8 @@ import getSocket from '../utils/socket';
 // import { RTCPeerConnection } from 'react-native-webrtc-web-shim';
 import Peer from "simple-peer";
 import styled from "styled-components";
-import ReactPlayer from 'react-player'
+import ReactPlayer from 'react-player';
+import io from 'socket.io-client';
 
 const socketConn = getSocket();
 
@@ -78,7 +79,16 @@ function WebCommunication() {
     }
 
     useEffect(() => {
-      socket.current = socketConn;
+
+        // Connect to the socket server
+        socket.current = io.connect('http://localhost:8400', {
+            transports: ["websocket"]
+        });
+
+        socket.current.on('connect', () => {
+            console.log('SOCKET CONNECTED');
+            socket.current.emit('mapUserIdAndSocketId',{userId:'vahanLeader', socketId: socket.current.id});
+        });
 
         socket.current.on('newUserAdded', (data) => {
             console.log('New User Added', data);
@@ -90,13 +100,11 @@ function WebCommunication() {
             setPeersRemoteDesc(data)
         })
 
-    }, []);
-
-    useEffect(() => {
-        if(socket?.current?.id){
-            socket?.current.emit('mapUserIdAndSocketId',{userId:'vahanLeader', socketId: socket.current.id});
+        return ()=> {
+            socket?.current?.disconnect();
         }
-    }, [socket])
+
+    }, []);
     
   return (
     <div>
@@ -106,7 +114,7 @@ function WebCommunication() {
         {streamStarted && <Video playsInline ref={partnerVideo} autoPlay />}
         <br/><br/>
 
-        {/* {
+        {
             remoteStream && (
                 <ReactPlayer
                 playing
@@ -115,7 +123,7 @@ function WebCommunication() {
                 width="500px"
                 url={remoteStream} />
             )
-        } */}
+        }
         
     </div>
   )
